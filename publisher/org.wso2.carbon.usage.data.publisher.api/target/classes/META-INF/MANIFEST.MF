@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bnd-LastModified: 1762762264051
+Build-Jdk: 21.0.5
+Built-By: dilanperera
+Bundle-Description: API module for Usage Data Publisher
+Bundle-ManifestVersion: 2
+Bundle-Name: WSO2 Carbon - Usage Data Publisher API
+Bundle-SymbolicName: org.wso2.carbon.usage.data.publisher.api
+Bundle-Version: 1.0.0.SNAPSHOT
+Created-By: Apache Maven Bundle Plugin
+Export-Package: org.wso2.carbon.usage.data.publisher.api;version="1.0.0.
+ SNAPSHOT";uses:="org.wso2.carbon.usage.data.publisher.api.model",org.ws
+ o2.carbon.usage.data.publisher.api.model;version="1.0.0.SNAPSHOT"
+Import-Package: org.wso2.carbon.usage.data.publisher.api.model;resolutio
+ n:=optional;version="[1.0,2)"
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
+Tool: Bnd-3.3.0.201609221906

@@ -1,0 +1,3 @@
+org/wso2/carbon/usage/data/publisher/api/Publisher.class
+org/wso2/carbon/usage/data/publisher/api/PublisherException.class
+org/wso2/carbon/usage/data/publisher/api/model/UsageData.class

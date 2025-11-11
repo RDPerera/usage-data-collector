@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/collectors/org.wso2.carbon.apimgt.usage.data.collector/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/collectors/org.wso2.carbon.apimgt.usage.data.collector/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/collectors/org.wso2.carbon.deployment.data.collector/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/collectors/org.wso2.carbon.deployment.data.collector/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/collectors/org.wso2.carbon.identity.usage.data.collector/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/collectors/org.wso2.carbon.identity.usage.data.collector/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/collectors/org.wso2.carbon.mi.usage.data.collector/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/collectors/org.wso2.carbon.mi.usage.data.collector/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/collectors/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/collectors/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/publisher/org.wso2.carbon.usage.data.publisher.api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/publisher/org.wso2.carbon.usage.data.publisher.api/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/publisher/org.wso2.carbon.usage.data.publisher.impl/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/publisher/org.wso2.carbon.usage.data.publisher.impl/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/publisher/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/publisher/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
+  </component>
+</project>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="org.wso2.carbon.usage.data.publisher.impl" />
+        <module name="org.wso2.micro.integrator.usage.data.collector (1)" />
+        <module name="org.wso2.carbon.usage.data.publisher.api" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="org.wso2.carbon.apimgt.usage.data.collector" target="1.8" />
+      <module name="org.wso2.carbon.deployment.data.collector" target="1.8" />
+      <module name="org.wso2.carbon.identity.usage.data.collector" target="1.8" />
+      <module name="org.wso2.carbon.mi.usage.data.collector" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+</project>

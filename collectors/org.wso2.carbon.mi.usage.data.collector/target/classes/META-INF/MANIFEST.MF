@@ -1,0 +1,35 @@
+Manifest-Version: 1.0
+Bnd-LastModified: 1762762270424
+Build-Jdk: 21.0.5
+Built-By: dilanperera
+Bundle-Description: Parent POM for Usage Data Collector modules
+Bundle-ManifestVersion: 2
+Bundle-Name: org.wso2.micro.integrator.usage.data.collector
+Bundle-SymbolicName: org.wso2.carbon
+Bundle-Version: 1.0.0.SNAPSHOT
+Created-By: Apache Maven Bundle Plugin
+Export-Package: org.wso2.micro.integrator.usage.data.collector;uses:="or
+ g.apache.synapse";version="1.0.0.SNAPSHOT",org.wso2.micro.integrator.us
+ age.data.collector.aggregator;uses:="org.wso2.micro.integrator.usage.da
+ ta.collector.publisher";version="1.0.0.SNAPSHOT",org.wso2.micro.integra
+ tor.usage.data.collector.exception;version="1.0.0.SNAPSHOT",org.wso2.mi
+ cro.integrator.usage.data.collector.model;uses:="org.wso2.carbon.usage.
+ data.publisher.api.model,org.wso2.micro.integrator.usage.data.collector
+ .record";version="1.0.0.SNAPSHOT",org.wso2.micro.integrator.usage.data.
+ collector.publisher;uses:="org.wso2.micro.integrator.usage.data.collect
+ or.record";version="1.0.0.SNAPSHOT",org.wso2.micro.integrator.usage.dat
+ a.collector.record;version="1.0.0.SNAPSHOT"
+Import-Package: org.apache.axis2.context;resolution:=optional,org.apache
+ .commons.logging;resolution:=optional,org.apache.synapse;resolution:=op
+ tional;version="[4.0,5)",org.apache.synapse.core.axis2;resolution:=opti
+ onal;version="[4.0,5)",org.wso2.carbon.usage.data.publisher.api;resolut
+ ion:=optional;version="[1.0,2)",org.wso2.carbon.usage.data.publisher.ap
+ i.model;resolution:=optional;version="[1.0,2)",org.wso2.carbon.usage.da
+ ta.publisher.impl;resolution:=optional;version="[1.0,2)",org.wso2.micro
+ .integrator.usage.data.collector.aggregator;resolution:=optional,org.ws
+ o2.micro.integrator.usage.data.collector.model;resolution:=optional,org
+ .wso2.micro.integrator.usage.data.collector.publisher;resolution:=optio
+ nal,org.wso2.micro.integrator.usage.data.collector.record;resolution:=o
+ ptional,org.apache.synapse.core;version="[4.0,5)"
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
+Tool: Bnd-5.1.1.202006162103
