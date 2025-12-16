@@ -31,7 +31,6 @@ import org.wso2.carbon.usage.data.collector.common.collector.DeploymentDataColle
 import org.wso2.carbon.usage.data.collector.common.collector.DeploymentDataCollectorTask;
 import org.wso2.carbon.usage.data.collector.common.collector.MetaInformationPublisher;
 import org.wso2.carbon.usage.data.collector.common.publisher.api.Publisher;
-import org.wso2.carbon.usage.data.collector.common.publisher.impl.HttpPublisher;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -41,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * OSGi service component that manages usage data collection.
- * This component injects Publisher and creates HttpPublisher directly.
+ * This component injects Publisher and uses it directly for all collectors.
  */
 @Component(
     name = "org.wso2.carbon.usage.data.collector.common",
@@ -52,13 +51,14 @@ public class UsageDataCollectorServiceComponent {
     private static final Log log = LogFactory.getLog(UsageDataCollectorServiceComponent.class);
 
     // Hardcoded configuration for scheduler
-    private static final long INITIAL_DELAY_SECONDS = 0;
+    private static final long INITIAL_DELAY_SECONDS = 600;
     private static final long INTERVAL_SECONDS = 3600;
+    private static final long META_INFO_PUBLISH_DELAY_SECONDS = 300; // 5 minutes
 
     private ScheduledExecutorService executorService;
     private ScheduledFuture<?> scheduledTask;
+    private ScheduledFuture<?> metaInfoPublishTask;
     private Publisher publisher;
-    private HttpPublisher httpPublisher;
 
     /**
      * Bind the Publisher.
@@ -72,11 +72,6 @@ public class UsageDataCollectorServiceComponent {
     )
     protected void setPublisher(Publisher service) {
         this.publisher = service;
-        // Create HttpPublisher directly with the injected service
-        this.httpPublisher = new HttpPublisher(service);
-        if (log.isDebugEnabled()) {
-            log.debug("Publisher bound and HttpPublisher created");
-        }
     }
 
     /**
@@ -84,40 +79,50 @@ public class UsageDataCollectorServiceComponent {
      */
     protected void unsetPublisher(Publisher service) {
         this.publisher = null;
-        this.httpPublisher = null;
-        if (log.isDebugEnabled()) {
-            log.debug("Publisher unbound");
-        }
     }
 
     @Activate
     protected void activate(ComponentContext context) {
         try {
-            log.info("Activating Usage Data Collector Common Service");
-
-            if (httpPublisher == null) {
-                log.error("HttpPublisher not available - cannot start usage data collector");
+            if (publisher == null) {
+                if(log.isDebugEnabled()) {
+                    log.error("Publisher not available - cannot start usage data collector");
+                }
                 return;
             }
 
-            // Publish MetaInformation to /meta-information endpoint at startup
-            // This also initializes the MetaInfoHolder cache for use in all payloads
-            MetaInformationPublisher metaInfoPublisher = new MetaInformationPublisher(httpPublisher);
-            metaInfoPublisher.publishAtStartup();
-
-            // Create deployment data collector with http publisher
-            // Note: Meta information is included in every payload using cached values from MetaInfoHolder
-            DeploymentDataCollector collector = new DeploymentDataCollector(httpPublisher);
-
-            // Initialize scheduler
-            executorService = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+            // Initialize scheduler for both meta information publishing and deployment data collection
+            executorService = Executors.newScheduledThreadPool(2, new ThreadFactory() {
+                private int counter = 0;
                 @Override
                 public Thread newThread(Runnable r) {
-                    Thread thread = new Thread(r, "UsageDataCollector-Thread");
+                    Thread thread = new Thread(r, "UsageDataCollector-Thread-" + (++counter));
                     thread.setDaemon(true);
                     return thread;
                 }
             });
+
+            // Schedule meta information publishing after 5 minutes (one-time task)
+            // This prevents HTTP retries from delaying server availability and allows system to stabilize
+            metaInfoPublishTask = executorService.schedule(() -> {
+                try {
+                    MetaInformationPublisher metaInfoPublisher = new MetaInformationPublisher(publisher);
+                    metaInfoPublisher.publishAtStartup();
+                    if (log.isDebugEnabled()) {
+                        log.debug("Meta information published successfully after 5 minute delay");
+                    }
+                } catch (Exception e) {
+                    if(log.isDebugEnabled()) {
+                        log.error("Failed to publish meta information at startup (non-fatal)", e);
+                    }
+                    // Non-fatal - server continues to start, meta info will be in payloads anyway
+                }
+            }, META_INFO_PUBLISH_DELAY_SECONDS, TimeUnit.SECONDS);
+
+            // Create deployment data collector with publisher
+            // Note: Meta information is included in every payload using cached values from MetaInfoHolder
+            DeploymentDataCollector collector = new DeploymentDataCollector(publisher);
+
 
             // Schedule the task
             scheduledTask = executorService.scheduleAtFixedRate(
@@ -126,20 +131,20 @@ public class UsageDataCollectorServiceComponent {
                 INTERVAL_SECONDS,
                 TimeUnit.SECONDS
             );
-
-            log.info("Usage Data Collector Service activated successfully - " +
-                    "scheduled with initial delay: " + INITIAL_DELAY_SECONDS +
-                    "s, interval: " + INTERVAL_SECONDS + "s");
         } catch (Exception e) {
-            log.error("Failed to activate Usage Data Collector Service Component", e);
+            if(log.isDebugEnabled()) {
+                log.error("Failed to activate Usage Data Collector Service Component", e);
+            }
         }
     }
 
     @Deactivate
     protected void deactivate(ComponentContext context) {
-        log.info("Deactivating Usage Data Collector Common Service");
+        // Stop the schedulers
+        if (metaInfoPublishTask != null) {
+            metaInfoPublishTask.cancel(false);
+        }
 
-        // Stop the scheduler
         if (scheduledTask != null) {
             scheduledTask.cancel(false);
         }
@@ -154,10 +159,6 @@ public class UsageDataCollectorServiceComponent {
                 executorService.shutdownNow();
                 Thread.currentThread().interrupt();
             }
-        }
-
-        if (log.isDebugEnabled()) {
-            log.debug("Usage Data Collector Service deactivated successfully");
         }
     }
 }

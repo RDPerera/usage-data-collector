@@ -16,21 +16,28 @@
  * under the License.
  */
 
-package org.wso2.carbon.usage.data.collector.common.collector;
+package org.wso2.carbon.usage.data.collector.apim.collector.apicount;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
- * Runnable task that executes the deployment data collection.
+ * Runnable task that executes the API count collection.
+ * This task wraps the collector to provide proper exception handling
+ * and prevent the scheduler from stopping on errors.
  */
-public class DeploymentDataCollectorTask implements Runnable {
+public class ApiCountCollectorTask implements Runnable {
 
-    private static final Log log = LogFactory.getLog(DeploymentDataCollectorTask.class);
+    private static final Log log = LogFactory.getLog(ApiCountCollectorTask.class);
 
-    private DeploymentDataCollector collector;
+    private final ApiCountCollector collector;
 
-    public DeploymentDataCollectorTask(DeploymentDataCollector collector) {
+    /**
+     * Constructor.
+     *
+     * @param collector The API count collector instance
+     */
+    public ApiCountCollectorTask(ApiCountCollector collector) {
         this.collector = collector;
     }
 
@@ -40,7 +47,7 @@ public class DeploymentDataCollectorTask implements Runnable {
             collector.collectAndPublish();
         } catch (Exception e) {
             if(log.isDebugEnabled()) {
-                log.error("Error executing deployment data collection task", e);
+                log.error("Error executing API count collection task", e);
             }
             // Don't propagate exception - let scheduler continue
         }

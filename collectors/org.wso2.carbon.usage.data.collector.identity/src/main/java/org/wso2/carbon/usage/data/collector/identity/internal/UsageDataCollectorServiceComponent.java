@@ -21,6 +21,7 @@ package org.wso2.carbon.usage.data.collector.identity.internal;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -32,6 +33,7 @@ import org.wso2.carbon.core.clustering.api.CoordinatedActivity;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.usage.data.collector.identity.UsageDataCollector;
 import org.wso2.carbon.usage.data.collector.identity.UsageDataCollectorTask;
+import org.wso2.carbon.usage.data.collector.identity.publisher.PublisherImp;
 import org.wso2.carbon.usage.data.collector.identity.util.ClusteringUtil;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.utils.ConfigurationContextService;
@@ -62,6 +64,7 @@ public class UsageDataCollectorServiceComponent {
     private ScheduledExecutorService scheduler;
     private ScheduledFuture<?> scheduledTask;
     private BundleContext bundleContext;
+    private ServiceRegistration<?> publisherServiceRegistration;
 
     @Activate
     protected void activate(ComponentContext context) {
@@ -81,6 +84,12 @@ public class UsageDataCollectorServiceComponent {
                 LOG.debug("Standalone setup detected. Usage data collectors starts immediately.");
                 runUsageCollectionTask();
             }
+
+            // Register the publisher.
+            publisherServiceRegistration = bundleContext.registerService(
+                    org.wso2.carbon.usage.data.collector.common.publisher.api.Publisher.class.getName(),
+                    new PublisherImp(),
+                    null);
 
             LOG.debug("UsageDataCollectorServiceComponent activated successfully");
 
@@ -114,6 +123,14 @@ public class UsageDataCollectorServiceComponent {
             } catch (InterruptedException e) {
                 scheduler.shutdownNow();
                 Thread.currentThread().interrupt();
+            }
+        }
+
+        if (publisherServiceRegistration != null) {
+            try {
+                publisherServiceRegistration.unregister();
+            } catch (IllegalStateException e) {
+                // Service already unregistered
             }
         }
     }

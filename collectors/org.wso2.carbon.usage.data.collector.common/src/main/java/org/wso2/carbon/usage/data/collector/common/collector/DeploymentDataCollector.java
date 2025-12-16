@@ -24,8 +24,12 @@ import com.google.gson.JsonParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.usage.data.collector.common.collector.model.DeploymentData;
+import org.wso2.carbon.usage.data.collector.common.internal.CommonUsageDataCollectorConstants;
+import org.wso2.carbon.usage.data.collector.common.publisher.api.Publisher;
+import org.wso2.carbon.usage.data.collector.common.publisher.api.PublisherException;
+import org.wso2.carbon.usage.data.collector.common.publisher.api.model.ApiRequest;
+import org.wso2.carbon.usage.data.collector.common.publisher.api.model.ApiResponse;
 import org.wso2.carbon.usage.data.collector.common.publisher.api.model.DeploymentInformation;
-import org.wso2.carbon.usage.data.collector.common.publisher.impl.HttpPublisher;
 import org.wso2.carbon.usage.data.collector.common.util.MetaInfoHolder;
 import org.wso2.carbon.usage.data.collector.common.util.UsageDataUtil;
 
@@ -46,10 +50,10 @@ public class DeploymentDataCollector {
     private static final String DEFAULT_PRODUCT_VERSION = "N/A";
     private static final String DEFAULT_UPDATE_LEVEL = "N/A";
 
-    private HttpPublisher httpPublisher;
+    private final Publisher publisher;
 
-    public DeploymentDataCollector(HttpPublisher httpPublisher) {
-        this.httpPublisher = httpPublisher;
+    public DeploymentDataCollector(Publisher publisher) {
+        this.publisher = publisher;
     }
 
     /**
@@ -59,16 +63,8 @@ public class DeploymentDataCollector {
      */
     public void collectAndPublish() {
         try {
-            if(log.isDebugEnabled()) {
-                log.debug("Starting deployment data collection");
-            }
-
             // Collect deployment data
             DeploymentData data = collectDeploymentData();
-
-            if(log.isDebugEnabled()) {
-                log.debug("Collected deployment data: " + data);
-            }
 
             // Build deployment info JSON object
             JsonObject deploymentInfo = new JsonObject();
@@ -103,15 +99,22 @@ public class DeploymentDataCollector {
                     deploymentInfoHash
             );
 
-            // Publish to /deployment-information endpoint
-            httpPublisher.publish(deploymentInformation);
+            // Build API request
+            ApiRequest request = new ApiRequest.Builder()
+                    .withEndpoint(CommonUsageDataCollectorConstants.DEPLOYMENT_INFO_ENDPOINT)
+                    .withData(deploymentInformation)
+                    .build();
 
+            // Publish to /deployment-information endpoint using Publisher with built-in retry
+            ApiResponse response = publisher.publishToReceiver(request);
+        } catch (PublisherException e) {
             if(log.isDebugEnabled()) {
-                log.debug("Deployment data published successfully");
+                log.error("Failed to publish deployment data after all retries", e);
             }
-
         } catch (Exception e) {
-            log.error("Failed to collect and publish deployment data", e);
+            if(log.isDebugEnabled()) {
+                log.error("Failed to collect and publish deployment data", e);
+            }
         }
     }
 
@@ -151,7 +154,9 @@ public class DeploymentDataCollector {
             data.setOperatingSystemVersion(System.getProperty("os.version"));
             data.setOperatingSystemArchitecture(System.getProperty("os.arch"));
         } catch (Exception e) {
-            log.error("Error collecting OS information", e);
+            if(log.isDebugEnabled()) {
+                log.error("Error collecting OS information", e);
+            }
         }
     }
 
@@ -163,7 +168,9 @@ public class DeploymentDataCollector {
             data.setJdkVersion(System.getProperty("java.version"));
             data.setJdkVendor(System.getProperty("java.vendor"));
         } catch (Exception e) {
-            log.error("Error collecting JDK information", e);
+            if(log.isDebugEnabled()) {
+                log.error("Error collecting JDK information", e);
+            }
         }
     }
 
@@ -178,16 +185,10 @@ public class DeploymentDataCollector {
 
             // Read product version from product.txt
             File productFile = new File(updatesDir, "product.txt");
-            if (log.isDebugEnabled()) {
-                log.debug("Product.txt path: " + productFile.getAbsolutePath());
-            }
 
             if (productFile.exists() && productFile.canRead()) {
                 String productVersion = readFirstLineFromFile(productFile);
                 if (!productVersion.isEmpty()) {
-                    if(log.isDebugEnabled()) {
-                        log.debug("Product version from product.txt: " + productVersion);
-                    }
                     data.setProductVersion(productVersion);
                 } else {
                     data.setProductVersion(DEFAULT_PRODUCT_VERSION);
@@ -198,9 +199,6 @@ public class DeploymentDataCollector {
 
             // Read update level from config.json
             File configFile = new File(updatesDir, "config.json");
-            if (log.isDebugEnabled()) {
-                log.debug("Config JSON path: " + configFile.getAbsolutePath());
-            }
 
             if (configFile.exists() && configFile.canRead()) {
                 JsonObject configJsonObj = readJsonObject(configFile.getAbsolutePath());
@@ -230,7 +228,9 @@ public class DeploymentDataCollector {
             String line = reader.readLine();
             return line != null ? line.trim() : "";
         } catch (Exception e) {
-            log.error("Could not read file: " + file.getAbsolutePath(), e);
+            if(log.isDebugEnabled()) {
+                log.error("Could not read file: " + file.getAbsolutePath(), e);
+            }
             return "";
         }
     }
@@ -245,7 +245,9 @@ public class DeploymentDataCollector {
         try (FileReader reader = new FileReader(filePath)) {
             return JsonParser.parseReader(reader).getAsJsonObject();
         } catch (Exception e) {
-            log.error("Error reading JSON file: " + filePath, e);
+            if(log.isDebugEnabled()) {
+                log.error("Error reading JSON file: " + filePath, e);
+            }
             return null;
         }
     }
@@ -258,7 +260,9 @@ public class DeploymentDataCollector {
             int cores = Runtime.getRuntime().availableProcessors();
             data.setNumberOfCores(cores);
         } catch (Exception e) {
-            log.error("Error collecting hardware information", e);
+            if(log.isDebugEnabled()) {
+                log.error("Error collecting hardware information", e);
+            }
         }
     }
 }

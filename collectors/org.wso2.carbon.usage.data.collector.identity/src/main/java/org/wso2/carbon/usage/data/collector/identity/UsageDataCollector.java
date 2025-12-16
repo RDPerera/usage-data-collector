@@ -21,11 +21,15 @@ package org.wso2.carbon.usage.data.collector.identity;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.usage.data.collector.common.publisher.api.model.ApiRequest;
+import org.wso2.carbon.usage.data.collector.common.publisher.api.model.ApiResponse;
 import org.wso2.carbon.usage.data.collector.identity.counter.OrganizationCounter;
 import org.wso2.carbon.usage.data.collector.identity.counter.UserCounter;
 import org.wso2.carbon.usage.data.collector.identity.internal.UsageDataCollectorDataHolder;
 import org.wso2.carbon.usage.data.collector.identity.model.SystemUsage;
 import org.wso2.carbon.usage.data.collector.identity.model.TenantUsage;
+import org.wso2.carbon.usage.data.collector.identity.publisher.HTTPClient;
+import org.wso2.carbon.usage.data.collector.identity.publisher.PublisherImp;
 import org.wso2.carbon.user.api.Tenant;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.tenant.TenantManager;
@@ -41,11 +45,15 @@ public class UsageDataCollector {
 
     private static final Log LOG = LogFactory.getLog(UsageDataCollector.class);
     public static final String SUPER_TENANT = "carbon.super";
+    public static final String TOTAL_USERS = "TOTAL_USERS";
+    public static final String TOTAL_B2B_ORGS = "TOTAL_B2B_ORGS";
+    public static final String TOTAL_ROOT_ORGS = "TOTAL_ROOT_ORGS";
 
     private final RealmService realmService;
     private final OrganizationManager organizationManager;
     private final UserCounter userCountCalculator;
     private final OrganizationCounter orgCountCalculator;
+    private final PublisherImp publisher;
 
     public UsageDataCollector() {
 
@@ -53,12 +61,16 @@ public class UsageDataCollector {
         this.organizationManager = UsageDataCollectorDataHolder.getInstance().getOrganizationManager();
         this.userCountCalculator = new UserCounter(realmService, organizationManager);
         this.orgCountCalculator = new OrganizationCounter(organizationManager);
+        this.publisher = new PublisherImp();
     }
 
+    /**
+     * Collect the metrics and publish them.
+     */
     public void collectAndPublish() {
 
         SystemUsage report = this.collectSystemStatistics();
-        //Todo: need to implement http publisher part.
+        publishUsageMetrics(report);
         publish(report);
     }
 
@@ -166,5 +178,32 @@ public class UsageDataCollector {
                 String.format("║ Total Users:              %-28d ║\n", report.getTotalUsers()) +
                 "╚════════════════════════════════════════════════════════════╝"
         );
+    }
+
+    private void publishUsageMetrics(SystemUsage report) {
+
+        publishMetric(report.getTotalUsers(), TOTAL_USERS);
+        publishMetric(report.getTotalB2BOrganizations(), TOTAL_B2B_ORGS);
+        publishMetric(report.getRootTenantCount(), TOTAL_ROOT_ORGS);
+    }
+
+    private void publishMetric(int count, String type) {
+
+        try {
+            ApiRequest request = HTTPClient.createUsageDataRequest(count, type);
+            ApiResponse response = publisher.callReceiverApi(request);
+
+            if (LOG.isDebugEnabled()) {
+                if (response.isSuccess()) {
+                    LOG.debug("Published " + type + ": " + count);
+                } else {
+                    LOG.debug("Failed to publish " + type + ": " + response.getErrorMessage());
+                }
+            }
+        } catch (Exception e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to publish " + type, e);
+            }
+        }
     }
 }

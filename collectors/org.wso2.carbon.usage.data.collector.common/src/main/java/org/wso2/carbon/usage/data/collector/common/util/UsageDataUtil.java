@@ -50,10 +50,6 @@ public class UsageDataUtil {
 
         cachedNodeIp = retrieveNodeIpAddress();
 
-        if (log.isDebugEnabled()) {
-            log.debug("Node IP address: " + cachedNodeIp);
-        }
-
         return cachedNodeIp;
     }
 
@@ -108,7 +104,9 @@ public class UsageDataUtil {
             return InetAddress.getLocalHost().getHostAddress();
 
         } catch (Exception e) {
-            log.error("Failed to determine node IP address, using localhost", e);
+            if(log.isDebugEnabled()) {
+                log.error("Failed to determine node IP address, using localhost", e);
+            }
             return "127.0.0.1";
         }
     }
@@ -140,7 +138,9 @@ public class UsageDataUtil {
 
             return hexString.toString();
         } catch (NoSuchAlgorithmException e) {
-            log.error("SHA-256 algorithm not available", e);
+            if(log.isDebugEnabled()) {
+                log.error("SHA-256 algorithm not available", e);
+            }
             // Fallback to simple hashCode if SHA-256 is not available
             return String.valueOf(input.hashCode());
         }

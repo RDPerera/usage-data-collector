@@ -21,8 +21,12 @@ package org.wso2.carbon.usage.data.collector.common.collector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.usage.data.collector.common.collector.model.DeploymentData;
+import org.wso2.carbon.usage.data.collector.common.internal.CommonUsageDataCollectorConstants;
+import org.wso2.carbon.usage.data.collector.common.publisher.api.Publisher;
+import org.wso2.carbon.usage.data.collector.common.publisher.api.PublisherException;
+import org.wso2.carbon.usage.data.collector.common.publisher.api.model.ApiRequest;
+import org.wso2.carbon.usage.data.collector.common.publisher.api.model.ApiResponse;
 import org.wso2.carbon.usage.data.collector.common.publisher.api.model.MetaInformation;
-import org.wso2.carbon.usage.data.collector.common.publisher.impl.HttpPublisher;
 import org.wso2.carbon.usage.data.collector.common.util.MetaInfoHolder;
 import org.wso2.carbon.usage.data.collector.common.util.UsageDataUtil;
 
@@ -38,12 +42,12 @@ public class MetaInformationPublisher {
 
     private static final Log log = LogFactory.getLog(MetaInformationPublisher.class);
 
-    private final HttpPublisher httpPublisher;
+    private final Publisher publisher;
     private final DeploymentDataCollector deploymentDataCollector;
 
-    public MetaInformationPublisher(HttpPublisher httpPublisher) {
-        this.httpPublisher = httpPublisher;
-        this.deploymentDataCollector = new DeploymentDataCollector(httpPublisher);
+    public MetaInformationPublisher(Publisher publisher) {
+        this.publisher = publisher;
+        this.deploymentDataCollector = new DeploymentDataCollector(publisher);
     }
 
     /**
@@ -58,8 +62,6 @@ public class MetaInformationPublisher {
      */
     public void publishAtStartup() {
         try {
-            log.info("Publishing MetaInformation at server startup...");
-
             // Get node IP address
             String ipAddress = UsageDataUtil.getNodeIpAddress();
 
@@ -75,19 +77,26 @@ public class MetaInformationPublisher {
                     MetaInfoHolder.getProduct()
             );
 
-            if (log.isDebugEnabled()) {
-                log.debug("Sending MetaInformation: " + metaInformation);
+            // Build API request
+            ApiRequest request = new ApiRequest.Builder()
+                    .withEndpoint(CommonUsageDataCollectorConstants.META_INFO_ENDPOINT)
+                    .withData(metaInformation)
+                    .build();
+
+            // Publish to /meta-information endpoint using Publisher with built-in retry
+            ApiResponse response = publisher.publishToReceiver(request);
+        } catch (PublisherException e) {
+            // Log error but don't fail - meta info will be in every payload anyway
+            if(log.isDebugEnabled()) {
+                log.warn("Failed to publish MetaInformation at startup after all retries. " +
+                        "This is not critical as meta info will be included in every payload.", e);
             }
-
-            // Publish to /meta-information endpoint
-            httpPublisher.publish(metaInformation);
-
-            log.info("MetaInformation published successfully at startup");
-
         } catch (Exception e) {
             // Log error but don't fail - meta info will be in every payload anyway
-            log.warn("Failed to publish MetaInformation at startup. " +
-                    "This is not critical as meta info will be included in every payload.", e);
+            if(log.isDebugEnabled()) {
+                log.warn("Failed to publish MetaInformation at startup. " +
+                        "This is not critical as meta info will be included in every payload.", e);
+            }
         }
     }
 }

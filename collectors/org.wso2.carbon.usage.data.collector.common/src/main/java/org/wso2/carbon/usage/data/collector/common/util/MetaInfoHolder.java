@@ -31,6 +31,7 @@ public class MetaInfoHolder {
     private static volatile String nodeId;
     private static volatile String product;
     private static volatile boolean initialized = false;
+
     /**
      * Initializes and caches the meta information.
      * Should be called once at server startup.
@@ -40,44 +41,34 @@ public class MetaInfoHolder {
      */
     public static synchronized void initialize(String ipAddress, DeploymentData deploymentData) {
         if (initialized) {
-            if (log.isDebugEnabled()) {
-                log.debug("MetaInfoHolder already initialized");
-            }
             return;
         }
         nodeId = ipAddress;
         product = deploymentData.getProductVersion();
         initialized = true;
-        log.info("MetaInfoHolder initialized - nodeId: " + nodeId + ", product: " + product);
     }
+
     /**
      * Gets the cached node ID (IP address).
      */
     public static String getNodeId() {
-        checkInitialized();
         return nodeId;
     }
+
     /**
      * Gets the cached product name and version.
      */
     public static String getProduct() {
-        checkInitialized();
         return product;
     }
+
     /**
      * Checks if meta information has been initialized.
      */
     public static boolean isInitialized() {
         return initialized;
     }
-    /**
-     * Checks if initialized and logs warning if not.
-     */
-    private static void checkInitialized() {
-        if (!initialized) {
-            log.warn("MetaInfoHolder accessed before initialization. Using defaults.");
-        }
-    }
+
     /**
      * Clears the cached meta information (for testing purposes).
      */
@@ -85,6 +76,5 @@ public class MetaInfoHolder {
         nodeId = null;
         product = null;
         initialized = false;
-        log.debug("MetaInfoHolder reset");
     }
 }

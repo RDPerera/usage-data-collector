@@ -16,17 +16,19 @@
  * under the License.
  */
 
-package org.wso2.carbon.usage.data.collector.identity.util;
+package org.wso2.carbon.usage.data.collector.common.internal;
 
 /**
- * Constants related to usage collection.
+ * Constants for Common Usage Data Collector.
  */
-public class UsageCollectorConstants {
+public class CommonUsageDataCollectorConstants {
 
-    private UsageCollectorConstants() {}
+    // API Endpoints
+    public static final String DEPLOYMENT_INFO_ENDPOINT = "receiver/deployment-information";
+    public static final String META_INFO_ENDPOINT = "receiver/meta-information";
 
-    public static final String USERNAME_CLAIM = "http://wso2.org/claims/username";
-    // Todo: Need to read this value from the license file.
-    public static final String PRODUCT = "wso2is-7.2.0";
-
+    private CommonUsageDataCollectorConstants() {
+        // Private constructor to prevent instantiation
+    }
 }
+

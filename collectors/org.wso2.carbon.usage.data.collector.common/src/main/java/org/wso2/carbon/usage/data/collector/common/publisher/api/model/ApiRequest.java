@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class ApiRequest {
 
-    private final UsageData data;
+    private final Object data;
     private final String endpoint;
     private final Map<String, String> headers;
     private final Map<String, String> queryParams;
@@ -44,7 +44,7 @@ public class ApiRequest {
         this.retryCount = builder.retryCount;
     }
 
-    public UsageData getData() {
+    public Object getData() {
         return data;
     }
 
@@ -73,7 +73,7 @@ public class ApiRequest {
     }
 
     public static class Builder {
-        private UsageData data;
+        private Object data;
         private String endpoint;
         private final Map<String, String> headers = new HashMap<>();
         private final Map<String, String> queryParams = new HashMap<>();
@@ -81,7 +81,7 @@ public class ApiRequest {
         private int timeoutMs = 10000;
         private int retryCount = 3;
 
-        public Builder withData(UsageData data) {
+        public Builder withData(Object data) {
             this.data = data;
             return this;
         }
@@ -128,7 +128,7 @@ public class ApiRequest {
 
         public ApiRequest build() {
             if (data == null) {
-                throw new IllegalArgumentException("UsageData cannot be null");
+                throw new IllegalArgumentException("Request data cannot be null");
             }
             return new ApiRequest(this);
         }
