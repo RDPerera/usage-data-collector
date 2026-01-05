@@ -35,7 +35,7 @@ import org.wso2.carbon.usage.data.collector.mi.transaction.record.TransactionRep
  * Transaction Report Publisher implementation.
  */
 @Component(
-    name = "org.wso2.carbon.usage.data.collector.mi.transaction.reporter",
+    name = "org.wso2.carbon.usage.data.collector.mi.transaction.publisher",
     service = TransactionPublisher.class,
     immediate = true
 )
@@ -44,7 +44,6 @@ public class TransactionPublisherImpl implements TransactionPublisher {
     private static final Log log = LogFactory.getLog(TransactionPublisherImpl.class);
 
     private volatile Publisher publisher;
-    private volatile boolean reportingActive = false;
     private org.wso2.carbon.usage.data.collector.mi.transaction.aggregator.TransactionAggregator aggregator;
 
     @Activate
@@ -123,42 +122,6 @@ public class TransactionPublisherImpl implements TransactionPublisher {
     }
 
     @Override
-    public void startReporting() {
-        if (publisher == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("Cannot start reporting - Publisher service not available");
-            }
-            return;
-        }
-        aggregator = org.wso2.carbon.usage.data.collector.mi.transaction.aggregator.TransactionAggregator.getInstance();
-        if (aggregator == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("Cannot start reporting - TransactionAggregator not available");
-            }
-            return;
-        }
-        aggregator.init(this);
-        reportingActive = true;
-        if (log.isDebugEnabled()) {
-            log.debug("Transaction reporting started and aggregator scheduled.");
-        }
-    }
-
-    @Override
-    public void stopReporting() {
-        if (aggregator != null && aggregator.isEnabled()) {
-            aggregator.shutdown();
-            if (log.isDebugEnabled()) {
-                log.debug("TransactionAggregator schedule stopped.");
-            }
-        }
-        reportingActive = false;
-        if (log.isDebugEnabled()) {
-            log.debug("Transaction reporting stopped.");
-        }
-    }
-
-    @Override
     public boolean publishTransaction(TransactionReport report) {
         return publishTransactionReport(report);
     }
@@ -207,45 +170,4 @@ public class TransactionPublisherImpl implements TransactionPublisher {
         }
     }
 
-    @Override
-    public boolean reportNow() {
-        if (publisher == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("Cannot report - Publisher service not available");
-            }
-            return false;
-        }
-        if (aggregator == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("Cannot report - TransactionAggregator not available");
-            }
-            return false;
-        }
-        try {
-            long count = aggregator.getAndResetCurrentHourlyCount();
-            org.wso2.carbon.usage.data.collector.mi.transaction.record.TransactionReport report =
-                new org.wso2.carbon.usage.data.collector.mi.transaction.record.TransactionReport(count);
-            boolean success = publishTransactionReport(report);
-            if (success) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Immediate transaction report published successfully.");
-                }
-            } else {
-                if (log.isDebugEnabled()) {
-                    log.debug("Failed to publish immediate transaction report.");
-                }
-            }
-            return success;
-        } catch (Exception e) {
-            if (log.isDebugEnabled()) {
-                log.debug("Error while reporting transaction data", e);
-            }
-            return false;
-        }
-    }
-
-    @Override
-    public boolean isReportingActive() {
-        return reportingActive && publisher != null;
-    }
 }
