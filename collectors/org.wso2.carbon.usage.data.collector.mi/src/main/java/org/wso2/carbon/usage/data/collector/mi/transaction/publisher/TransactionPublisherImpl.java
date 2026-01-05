@@ -41,7 +41,7 @@ import org.wso2.carbon.usage.data.collector.mi.transaction.record.TransactionRep
 )
 public class TransactionPublisherImpl implements TransactionPublisher {
 
-    private static final Log LOG = LogFactory.getLog(TransactionPublisherImpl.class);
+    private static final Log log = LogFactory.getLog(TransactionPublisherImpl.class);
 
     private volatile Publisher publisher;
     private volatile boolean reportingActive = false;
@@ -65,10 +65,10 @@ public class TransactionPublisherImpl implements TransactionPublisher {
         usageData.setProduct(MetaInfoHolder.getProduct());
         usageData.setCount(report.getTotalCount());
         usageData.setType("TRANSACTION_COUNT");
-        usageData.setCreatedTime(java.time.Instant.ofEpochMilli(report.getHourEndTime()).toString());
+        usageData.setCreatedTime(report.getCreatedTime());
 
         return new org.wso2.carbon.usage.data.collector.common.publisher.api.model.ApiRequest.Builder()
-                .withEndpoint("transaction-reports")
+                .withEndpoint("deployment-usage-stats")
                 .withData(usageData)
                 .build();
     }
@@ -79,7 +79,6 @@ public class TransactionPublisherImpl implements TransactionPublisher {
         private String product;
         private long count;
         private String type;
-        private String createdTime;
 
         public void setNodeId(String nodeId) {
             this.nodeId = nodeId;
@@ -92,9 +91,6 @@ public class TransactionPublisherImpl implements TransactionPublisher {
         }
         public void setType(String type) {
             this.type = type;
-        }
-        public void setCreatedTime(String createdTime) {
-            this.createdTime = createdTime;
         }
 
         @Override
@@ -129,27 +125,37 @@ public class TransactionPublisherImpl implements TransactionPublisher {
     @Override
     public void startReporting() {
         if (publisher == null) {
-            LOG.debug("Cannot start reporting - Publisher service not available");
+            if (log.isDebugEnabled()) {
+                log.debug("Cannot start reporting - Publisher service not available");
+            }
             return;
         }
         aggregator = org.wso2.carbon.usage.data.collector.mi.transaction.aggregator.TransactionAggregator.getInstance();
         if (aggregator == null) {
-            LOG.error("Cannot start reporting - TransactionAggregator not available");
+            if (log.isDebugEnabled()) {
+                log.debug("Cannot start reporting - TransactionAggregator not available");
+            }
             return;
         }
         aggregator.init(this);
         reportingActive = true;
-        LOG.info("Transaction reporting started and aggregator scheduled.");
+        if (log.isDebugEnabled()) {
+            log.debug("Transaction reporting started and aggregator scheduled.");
+        }
     }
 
     @Override
     public void stopReporting() {
         if (aggregator != null && aggregator.isEnabled()) {
             aggregator.shutdown();
-            LOG.info("TransactionAggregator schedule stopped.");
+            if (log.isDebugEnabled()) {
+                log.debug("TransactionAggregator schedule stopped.");
+            }
         }
         reportingActive = false;
-        LOG.info("Transaction reporting stopped.");
+        if (log.isDebugEnabled()) {
+            log.debug("Transaction reporting stopped.");
+        }
     }
 
     @Override
@@ -163,7 +169,18 @@ public class TransactionPublisherImpl implements TransactionPublisher {
             currentPublisher = this.publisher;
         }
         if (currentPublisher == null) {
-            LOG.debug("TransactionReportPublisher: Cannot publish - Publisher service not available via OSGi");
+            if (log.isDebugEnabled()) {
+                log.debug("TransactionReportPublisher: Cannot publish - Publisher service not available via OSGi");
+            }
+            return false;
+        }
+
+        // Check if MetaInfoHolder is initialized before publishing
+        if (!MetaInfoHolder.isInitialized()) {
+            if (log.isDebugEnabled()) {
+                log.debug("TransactionReportPublisher: Cannot publish - MetaInfoHolder not yet initialized. " +
+                        "Skipping this report cycle, transaction count will be published in the next cycle.");
+            }
             return false;
         }
 
@@ -177,11 +194,15 @@ public class TransactionPublisherImpl implements TransactionPublisher {
             } else {
                 int status = response != null ? response.getStatusCode() : -1;
                 String body = response != null ? response.getResponseBody() : "null";
-                LOG.error("TransactionReportPublisher: Failed to publish transaction report. Status: " + status + ", Body: " + body);
+                if (log.isDebugEnabled()) {
+                    log.debug("TransactionReportPublisher: Failed to publish transaction report. Status: " + status + ", Body: " + body);
+                }
                 return false;
             }
         } catch (Exception e) {
-            LOG.error("TransactionReportPublisher: Error while publishing transaction report via OSGi service", e);
+            if (log.isDebugEnabled()) {
+                log.debug("TransactionReportPublisher: Error while publishing transaction report via OSGi service", e);
+            }
             return false;
         }
     }
@@ -189,29 +210,36 @@ public class TransactionPublisherImpl implements TransactionPublisher {
     @Override
     public boolean reportNow() {
         if (publisher == null) {
-            LOG.debug("Cannot report - Publisher service not available");
+            if (log.isDebugEnabled()) {
+                log.debug("Cannot report - Publisher service not available");
+            }
             return false;
         }
         if (aggregator == null) {
-            LOG.error("Cannot report - TransactionAggregator not available");
+            if (log.isDebugEnabled()) {
+                log.debug("Cannot report - TransactionAggregator not available");
+            }
             return false;
         }
         try {
             long count = aggregator.getAndResetCurrentHourlyCount();
-            long hourStartTime = aggregator.getCurrentHourStartTime();
-            long hourEndTime = System.currentTimeMillis();
             org.wso2.carbon.usage.data.collector.mi.transaction.record.TransactionReport report =
-                new org.wso2.carbon.usage.data.collector.mi.transaction.record.TransactionReport(
-                    count, hourStartTime, hourEndTime);
+                new org.wso2.carbon.usage.data.collector.mi.transaction.record.TransactionReport(count);
             boolean success = publishTransactionReport(report);
             if (success) {
-                LOG.info("Immediate transaction report published successfully.");
+                if (log.isDebugEnabled()) {
+                    log.debug("Immediate transaction report published successfully.");
+                }
             } else {
-                LOG.error("Failed to publish immediate transaction report.");
+                if (log.isDebugEnabled()) {
+                    log.debug("Failed to publish immediate transaction report.");
+                }
             }
             return success;
         } catch (Exception e) {
-            LOG.error("Error while reporting transaction data", e);
+            if (log.isDebugEnabled()) {
+                log.debug("Error while reporting transaction data", e);
+            }
             return false;
         }
     }

@@ -16,6 +16,7 @@
  * under the License.
  */
 
+
 package org.wso2.carbon.usage.data.collector.mi.transaction.counter;
 
 import org.apache.commons.logging.Log;
@@ -47,7 +48,7 @@ import org.wso2.carbon.usage.data.collector.mi.transaction.publisher.Transaction
 )
 public class TransactionCountHandlerComponent extends AbstractExtendedSynapseHandler {
 
-    private static final Log LOG = LogFactory.getLog(TransactionCountHandlerComponent.class);
+    private static final Log log = LogFactory.getLog(TransactionCountHandlerComponent.class);
     
     private TransactionCountHandler handler;
     private TransactionPublisher transactionPublisher;
@@ -55,7 +56,9 @@ public class TransactionCountHandlerComponent extends AbstractExtendedSynapseHan
     @Activate
     protected void activate() {
         try {
-            LOG.debug("Activating TransactionCountHandler OSGi component");
+            if (log.isDebugEnabled()) {
+                log.debug("Activating TransactionCountHandler OSGi component");
+            }
             
             // Create the handler instance
             handler = new TransactionCountHandler();
@@ -63,33 +66,49 @@ public class TransactionCountHandlerComponent extends AbstractExtendedSynapseHan
             // Register the publisher if available
             if (transactionPublisher != null) {
                 TransactionCountHandler.registerTransactionPublisher(transactionPublisher);
-                LOG.debug("TransactionCountHandler registered with TransactionPublisher");
+                if (log.isDebugEnabled()) {
+                    log.debug("TransactionCountHandler registered with TransactionPublisher");
+                }
             } else {
-                LOG.warn("TransactionPublisher not available during activation. " +
+                if (log.isDebugEnabled()) {
+                    log.debug("TransactionPublisher not available during activation. " +
                         "Handler will be initialized when publisher becomes available.");
+                }
             }
             
-            LOG.debug("TransactionCountHandler component activated successfully");
+            if (log.isDebugEnabled()) {
+                log.debug("TransactionCountHandler component activated successfully");
+            }
         } catch (Exception e) {
-            LOG.error("Error activating TransactionCountHandler component", e);
+            if (log.isDebugEnabled()) {
+                log.debug("Error activating TransactionCountHandler component", e);
+            }
         }
     }
 
     @Deactivate
     protected void deactivate() {
         try {
-            LOG.debug("Deactivating TransactionCountHandler OSGi component");
+            if (log.isDebugEnabled()) {
+                log.debug("Deactivating TransactionCountHandler OSGi component");
+            }
             
             // Unregister the publisher
             if (transactionPublisher != null) {
                 TransactionCountHandler.unregisterTransactionPublisher(transactionPublisher);
-                LOG.debug("TransactionCountHandler unregistered from TransactionPublisher");
+                if (log.isDebugEnabled()) {
+                    log.debug("TransactionCountHandler unregistered from TransactionPublisher");
+                }
             }
             
             handler = null;
-            LOG.debug("TransactionCountHandler component deactivated successfully");
+            if (log.isDebugEnabled()) {
+                log.debug("TransactionCountHandler component deactivated successfully");
+            }
         } catch (Exception e) {
-            LOG.error("Error deactivating TransactionCountHandler component", e);
+            if (log.isDebugEnabled()) {
+                log.debug("Error deactivating TransactionCountHandler component", e);
+            }
         }
     }
 
@@ -107,16 +126,22 @@ public class TransactionCountHandlerComponent extends AbstractExtendedSynapseHan
     )
     protected void setTransactionPublisher(TransactionPublisher publisher) {
         try {
-            LOG.debug("TransactionPublisher service bound to TransactionCountHandler component");
+            if (log.isDebugEnabled()) {
+                log.debug("TransactionPublisher service bound to TransactionCountHandler component");
+            }
             this.transactionPublisher = publisher;
             
             // If handler is already created, register it with the publisher
             if (handler != null) {
                 TransactionCountHandler.registerTransactionPublisher(publisher);
-                LOG.debug("Existing TransactionCountHandler registered with newly bound TransactionPublisher");
+                if (log.isDebugEnabled()) {
+                    log.debug("Existing TransactionCountHandler registered with newly bound TransactionPublisher");
+                }
             }
         } catch (Exception e) {
-            LOG.error("Error binding TransactionPublisher to TransactionCountHandler", e);
+            if (log.isDebugEnabled()) {
+                log.debug("Error binding TransactionPublisher to TransactionCountHandler", e);
+            }
         }
     }
 
@@ -127,15 +152,21 @@ public class TransactionCountHandlerComponent extends AbstractExtendedSynapseHan
      */
     protected void unsetTransactionPublisher(TransactionPublisher publisher) {
         try {
-            LOG.debug("TransactionPublisher service unbound from TransactionCountHandler component");
+            if (log.isDebugEnabled()) {
+                log.debug("TransactionPublisher service unbound from TransactionCountHandler component");
+            }
             
             if (this.transactionPublisher == publisher) {
                 TransactionCountHandler.unregisterTransactionPublisher(publisher);
                 this.transactionPublisher = null;
-                LOG.debug("TransactionCountHandler unregistered from TransactionPublisher");
+                if (log.isDebugEnabled()) {
+                    log.debug("TransactionCountHandler unregistered from TransactionPublisher");
+                }
             }
         } catch (Exception e) {
-            LOG.error("Error unbinding TransactionPublisher from TransactionCountHandler", e);
+            if (log.isDebugEnabled()) {
+                log.debug("Error unbinding TransactionPublisher from TransactionCountHandler", e);
+            }
         }
     }
 

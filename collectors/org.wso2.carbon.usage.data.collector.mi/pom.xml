@@ -42,11 +42,24 @@
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
         </dependency>
+        <!-- Gson for JSON serialization -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>${gson.version}</version>
+        </dependency>
         <!-- Common Publisher API -->
         <dependency>
             <groupId>org.wso2.carbon</groupId>
             <artifactId>org.wso2.carbon.usage.data.collector.common</artifactId>
             <version>${common.collector.version}</version>
+        </dependency>
+
+        <!-- Usage Data Receiver Core -->
+        <dependency>
+            <groupId>org.wso2.carbon.usage.data.receiver</groupId>
+            <artifactId>org.wso2.carbon.usage.data.receiver.core</artifactId>
+            <version>${receiver.core.version}</version>
         </dependency>
 
         <!-- Apache HTTP Client -->
@@ -172,8 +185,10 @@
 
         <!-- Dependency Versions -->
         <common.collector.version>1.0.0-SNAPSHOT</common.collector.version>
+        <receiver.core.version>1.0.0-SNAPSHOT</receiver.core.version>
         <synapse.version>[4.0.0,5.0.0)</synapse.version>
         <jackson.version>2.16.0</jackson.version>
+        <gson.version>2.10.1</gson.version>
         <httpcore.version>4.4.16.wso2v1</httpcore.version>
         <httpcomponent.version>4.2.5.wso2v1</httpcomponent.version>
         <osgi.core.version>6.0.0</osgi.core.version>

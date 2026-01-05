@@ -26,7 +26,7 @@ import org.wso2.carbon.usage.data.collector.mi.transaction.aggregator.Transactio
 import org.wso2.carbon.usage.data.collector.mi.transaction.publisher.TransactionPublisher;
 
 public class TransactionCountHandler extends AbstractExtendedSynapseHandler {
-    private static final Log LOG = LogFactory.getLog(TransactionCountHandler.class);
+    private static final Log log = LogFactory.getLog(TransactionCountHandler.class);
     private TransactionAggregator transactionAggregator;
     private TransactionPublisher publisher;
     private volatile boolean enabled = false;
@@ -60,7 +60,9 @@ public class TransactionCountHandler extends AbstractExtendedSynapseHandler {
                 instance = this;
             }
         } catch (Exception e) {
-            LOG.error("TransactionCountHandler: Error in constructor", e);
+            if (log.isDebugEnabled()) {
+                log.error("TransactionCountHandler: Error in constructor", e);
+            }
             this.enabled = false;
         }
     }
@@ -87,14 +89,16 @@ public class TransactionCountHandler extends AbstractExtendedSynapseHandler {
 
     @Override
     public boolean handleServerShutDown() {
-        LOG.debug("Shutting down Transaction Counter...");
-        
+        if (log.isDebugEnabled()) {
+            log.debug("Shutting down Transaction Counter...");
+        }
         // Clean up resources
         if (transactionAggregator != null && transactionAggregator.isEnabled()) {
             transactionAggregator.shutdown();
         }
-        
-        LOG.debug("Transaction Counter shutdown completed");
+        if (log.isDebugEnabled()) {
+            log.debug("Transaction Counter shutdown completed");
+        }
         return true;
     }
 
