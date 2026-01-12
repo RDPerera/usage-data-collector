@@ -53,7 +53,7 @@ public class UsageDataCollectorServiceComponent {
     // Hardcoded configuration for scheduler
     private static final long INITIAL_DELAY_SECONDS = 600;
     private static final long INTERVAL_SECONDS = 3600;
-    private static final long META_INFO_PUBLISH_DELAY_SECONDS = 300; // 5 minutes
+    private static final long META_INFO_PUBLISH_DELAY_SECONDS = 300;
 
     private ScheduledExecutorService executorService;
     private ScheduledFuture<?> scheduledTask;
@@ -72,6 +72,9 @@ public class UsageDataCollectorServiceComponent {
     )
     protected void setPublisher(Publisher service) {
         this.publisher = service;
+        if (log.isDebugEnabled()) {
+            log.debug("Publisher service bound to UsageDataCollectorServiceComponent");
+        }
     }
 
     /**
@@ -85,10 +88,12 @@ public class UsageDataCollectorServiceComponent {
     protected void activate(ComponentContext context) {
         try {
             if (publisher == null) {
-                if(log.isDebugEnabled()) {
-                    log.error("Publisher not available - cannot start usage data collector");
-                }
+                log.error("Publisher not available - cannot start usage data collector");
                 return;
+            }
+            
+            if (log.isDebugEnabled()) {
+                log.debug("Activating Usage Data Collector Service Component");
             }
 
             // Initialize scheduler for both meta information publishing and deployment data collection

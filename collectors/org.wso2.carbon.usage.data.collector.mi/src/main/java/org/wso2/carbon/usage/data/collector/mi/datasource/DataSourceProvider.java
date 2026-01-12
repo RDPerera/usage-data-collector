@@ -58,8 +58,6 @@ public class DataSourceProvider {
         this.dataSourceName = dataSourceName;
         this.initialized = true;
 
-        // Don't throw exception on first initialization
-        // DataSource might not be ready yet
         if (dataSource == null) {
             dataSource = lookupDataSource();
             if (dataSource == null) {

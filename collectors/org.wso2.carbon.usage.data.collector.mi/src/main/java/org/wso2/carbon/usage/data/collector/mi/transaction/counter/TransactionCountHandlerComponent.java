@@ -32,18 +32,23 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.usage.data.collector.mi.transaction.publisher.TransactionPublisher;
 
+import static org.wso2.carbon.usage.data.collector.mi.transaction.counter.TransactionCounterConstants.COMPONENT_NAME;
+import static org.wso2.carbon.usage.data.collector.mi.transaction.counter.TransactionCounterConstants.HANDLER_NAME_PROPERTY;
+import static org.wso2.carbon.usage.data.collector.mi.transaction.counter.TransactionCounterConstants.HANDLER_ENABLED_PROPERTY;
+import static org.wso2.carbon.usage.data.collector.mi.transaction.counter.TransactionCounterConstants.TRANSACTION_PUBLISHER_REFERENCE;
+
 /**
  * OSGi component that registers TransactionCountHandler as a SynapseHandler service.
  * This component will be automatically picked up by DynamicSynapseHandlerRegistrar
  * which listens for SynapseHandler services with dynamic cardinality.
  */
 @Component(
-        name = "org.wso2.carbon.usage.data.collector.mi.transaction.counter.handler.component",
+        name = COMPONENT_NAME,
         service = SynapseHandler.class,
         immediate = true,
         property = {
-                "handler.name=TransactionCountHandler",
-                "handler.enabled=true"
+                HANDLER_NAME_PROPERTY,
+                HANDLER_ENABLED_PROPERTY
         }
 )
 public class TransactionCountHandlerComponent extends AbstractExtendedSynapseHandler {
@@ -65,7 +70,7 @@ public class TransactionCountHandlerComponent extends AbstractExtendedSynapseHan
             
             // Register the publisher if available
             if (transactionPublisher != null) {
-                TransactionCountHandler.registerTransactionPublisher(transactionPublisher);
+                handler.setPublisher(transactionPublisher);
                 if (log.isDebugEnabled()) {
                     log.debug("TransactionCountHandler registered with TransactionPublisher");
                 }
@@ -94,8 +99,8 @@ public class TransactionCountHandlerComponent extends AbstractExtendedSynapseHan
             }
             
             // Unregister the publisher
-            if (transactionPublisher != null) {
-                TransactionCountHandler.unregisterTransactionPublisher(transactionPublisher);
+            if (transactionPublisher != null && handler != null) {
+                handler.unsetPublisher(transactionPublisher);
                 if (log.isDebugEnabled()) {
                     log.debug("TransactionCountHandler unregistered from TransactionPublisher");
                 }
@@ -118,7 +123,7 @@ public class TransactionCountHandlerComponent extends AbstractExtendedSynapseHan
      * @param publisher the TransactionPublisher service
      */
     @Reference(
-            name = "transaction.publisher",
+            name = TRANSACTION_PUBLISHER_REFERENCE,
             service = TransactionPublisher.class,
             cardinality = ReferenceCardinality.OPTIONAL,
             policy = ReferencePolicy.DYNAMIC,
@@ -133,7 +138,7 @@ public class TransactionCountHandlerComponent extends AbstractExtendedSynapseHan
             
             // If handler is already created, register it with the publisher
             if (handler != null) {
-                TransactionCountHandler.registerTransactionPublisher(publisher);
+                handler.setPublisher(publisher);
                 if (log.isDebugEnabled()) {
                     log.debug("Existing TransactionCountHandler registered with newly bound TransactionPublisher");
                 }
@@ -157,7 +162,9 @@ public class TransactionCountHandlerComponent extends AbstractExtendedSynapseHan
             }
             
             if (this.transactionPublisher == publisher) {
-                TransactionCountHandler.unregisterTransactionPublisher(publisher);
+                if (handler != null) {
+                    handler.unsetPublisher(publisher);
+                }
                 this.transactionPublisher = null;
                 if (log.isDebugEnabled()) {
                     log.debug("TransactionCountHandler unregistered from TransactionPublisher");

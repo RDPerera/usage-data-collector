@@ -57,7 +57,11 @@ public class PublisherImpl implements Publisher {
     private final UsageDataProcessor usageDataProcessor = new UsageDataProcessor();
     
     @Activate
-    protected void activate() {}
+    protected void activate() {
+        if (log.isDebugEnabled()) {
+            log.debug("PublisherImpl OSGi component activated - Publisher service is now available");
+        }
+    }
 
     @Deactivate
     protected void deactivate() {
@@ -79,7 +83,7 @@ public class PublisherImpl implements Publisher {
     // Endpoint path constants for identifying request type
     private static final String USAGE_COUNT_ENDPOINT = "deployment-usage-stats";
     private static final String DEPLOYMENT_INFO_ENDPOINT = "deployment-information";
-    private static final String META_INFO_ENDPOINT = "deployment-meta-information";
+    private static final String META_INFO_ENDPOINT = "meta-information";
     
     private static final Gson gson = new Gson();
 
@@ -338,13 +342,18 @@ public class PublisherImpl implements Publisher {
                 StringBuilder sb = new StringBuilder();
                 @SuppressWarnings("unchecked")
                 Map<String, Object> dataMap = (Map<String, Object>) request.getData();
-                for (Map.Entry<String, Object> entry : dataMap.entrySet()) {
-                    if (sb.length() > 0) {
-                        sb.append("&");
+                try {
+                    for (Map.Entry<String, Object> entry : dataMap.entrySet()) {
+                        if (sb.length() > 0) {
+                            sb.append("&");
+                        }
+                        // Java 8 compatible - uses String instead of Charset
+                        sb.append(java.net.URLEncoder.encode(entry.getKey(), "UTF-8"))
+                          .append("=")
+                          .append(java.net.URLEncoder.encode(String.valueOf(entry.getValue()), "UTF-8"));
                     }
-                    sb.append(java.net.URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8))
-                      .append("=")
-                      .append(java.net.URLEncoder.encode(String.valueOf(entry.getValue()), StandardCharsets.UTF_8));
+                } catch (java.io.UnsupportedEncodingException e) {
+                    throw new PublisherException("UTF-8 encoding not supported", e);
                 }
                 requestBody = sb.toString();
             } else {
